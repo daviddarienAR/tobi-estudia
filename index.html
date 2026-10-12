@@ -159,6 +159,21 @@
   details.desarrollo ul { margin: 8px 0 2px 18px; font-size: 0.86rem; line-height: 1.6; }
   .seccion-titulo { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--acc-oscuro); margin: 14px 0 4px; }
 
+  /* CASOS */
+  .caso-frag { background: #fffaf3; border-left: 4px solid var(--acc); border-radius: 8px; padding: 12px 14px; font-style: italic; font-size: 0.92rem; line-height: 1.6; margin: 10px 0; color: #3a2a1a; }
+  .caso-consigna { font-weight: 600; font-size: 0.92rem; line-height: 1.55; margin: 10px 0; color: var(--pri); }
+  .caso-origen { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 12px; background: var(--gris); color: #555; margin-right: 6px; }
+  .caso-origen.examen { background: var(--acc); color: #2a1300; }
+  .caso-texto { width: 100%; min-height: 150px; border: 2px solid var(--borde); border-radius: 10px; padding: 10px 12px; font-family: inherit; font-size: 0.9rem; line-height: 1.55; resize: vertical; color: var(--texto); }
+  .caso-texto:focus { outline: none; border-color: var(--acc); }
+  .caso-guia { display: none; margin-top: 12px; }
+  .caso-guia.visible { display: block; }
+  .caso-guia h4 { font-size: 0.85rem; color: var(--acc-oscuro); text-transform: uppercase; letter-spacing: 0.6px; margin: 12px 0 4px; }
+  .caso-modelo { background: var(--verde-claro); border-left: 4px solid var(--verde); border-radius: 8px; padding: 12px 14px; font-size: 0.9rem; line-height: 1.65; color: #183d1e; }
+  .caso-check { display: flex; gap: 8px; align-items: flex-start; font-size: 0.88rem; line-height: 1.5; padding: 6px 4px; cursor: pointer; }
+  .caso-check input { margin-top: 4px; transform: scale(1.15); }
+  .caso-nota { font-size: 0.8rem; color: #8a5a00; background: #fff4dc; border-radius: 8px; padding: 8px 10px; margin-top: 8px; }
+
   /* RESUMEN */
   .resumen-card { background: white; border-radius: 12px; padding: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 16px; border: 1px solid var(--borde); }
   .resumen-card h2 { color: var(--pri); margin-bottom: 16px; font-size: 1.15rem; }
@@ -256,6 +271,7 @@
   <button class="active" onclick="mostrarPantalla('inicio')">🏠 Inicio</button>
   <button onclick="mostrarPantalla('quiz')">📝 Quiz</button>
   <button onclick="mostrarPantalla('flash')">🃏 Flashcards</button>
+  <button onclick="mostrarPantalla('casos')">✍️ Casos</button>
   <button onclick="mostrarPantalla('apuntes')">📖 Apuntes</button>
   <button onclick="mostrarPantalla('resumen')">📊 Resumen</button>
   <button onclick="mostrarPantalla('refuerzo')">🎯 Refuerzo</button>
@@ -278,6 +294,7 @@
   <div class="card" style="margin-top:14px">
     <h3>Accesos directos</h3>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+      <button class="btn-accion naranja" onclick="mostrarPantalla('casos')">✍️ Casos (formato examen)</button>
       <button class="btn-accion naranja" onclick="iniciarQuizTema('todos')">🎓 Simulacro de examen</button>
       <button class="btn-accion primario" onclick="mostrarPantalla('apuntes')">📖 Ver apuntes</button>
       <button class="btn-accion primario" onclick="mostrarPantalla('resumen')">📊 Mi resumen</button>
@@ -380,6 +397,17 @@
       <button class="btn-accion secundario" onclick="mostrarPantalla('refuerzo')">🎯 Ir a Refuerzo</button>
     </div>
   </div>
+</div>
+
+<!-- CASOS (formato examen) -->
+<div id="pantalla-casos" class="screen">
+  <div class="card" style="border-left:4px solid var(--acc)">
+    <h2>✍️ Análisis de casos — formato del examen</h2>
+    <p style="font-size:0.88rem;color:#444;line-height:1.6">El examen te da un <strong>fragmento o testimonio</strong> y te pide identificar el concepto del autor, <strong>fundamentar</strong>, nombrar <strong>esferas</strong> y proponer una <strong>estrategia</strong>. Escribí tu respuesta como si fuera el examen (se guarda sola) y después abrí la guía de corrección para compararla.</p>
+    <div class="ls-tip">🧭 <strong>Receta para cualquier consigna:</strong> 1) Nombrá el concepto/proceso del autor. 2) Definilo con las palabras del texto. 3) Citá frases del fragmento que lo muestran. 4) Sumá esferas y ejes de desigualdad (Adelantado). 5) Proponé una estrategia que lo deconstruya. 6) Si podés, conectá con otro autor.</div>
+  </div>
+  <div class="selector-tema-quiz" id="casos-filtro"></div>
+  <div id="casos-lista"></div>
 </div>
 
 <!-- APUNTES -->
@@ -750,6 +778,26 @@ const preguntas = [
   { id:'v29', tema:'grassi', vf:true, p:"V o F: Grassi propone “llevar la cultura al barrio”.", ops:["Verdadero","Falso"], r:1, exp:"Falso: propone universalizar esos bienes y crear espacios en común." },
   { id:'v30', tema:'grassi', vf:true, p:"V o F: Para Grassi, el neoliberalismo es solamente una política económica.", ops:["Verdadero","Falso"], r:1, exp:"Falso: es principalmente una formación cultural construida durante décadas." },
 
+  // ───────── CASOS: IDENTIFICAR EL CONCEPTO EN UN FRAGMENTO (formato examen) ─────────
+  { id:'k1', tema:'casos', p:"«Me decían “negra fea”, por el color de piel, por la forma de hablar, porque era boliviana» — Desde Dubet, ¿qué tipo de desigualdad se observa?", ops:["Una discriminación por origen/“raza”/cultura: la desigualdad pensada como obstáculo a la igualdad de oportunidades, vivida y percibida","Una desigualdad de posiciones entre obreros y ejecutivos","Una desigualdad de patrimonio por herencia","Una desigualdad entre países (curva del elefante)"], r:0, exp:"En el modelo de oportunidades los grupos se definen por las discriminaciones que sufren (raza, cultura, sexo). Es además una desigualdad percibida, que no muestran las estadísticas." },
+  { id:'k2', tema:'casos', p:"«Los puestos de supervisor son para los varones; a las mujeres nos mandan a empaque porque “somos más prolijas”» — ¿Qué proceso de Reygadas aparece principalmente?", ops:["Clasificación, categorización y creación de límites (categorías pareadas de Tilly)","Disputas por la legitimación","Producción del capital simbólico","Revaloración de lo subalterno"], r:0 },
+  { id:'k3', tema:'casos', p:"«Nos dicen villeros, chorros; algunos acá ya se lo creen» — ¿Qué proceso de Reygadas aparece?", ops:["Valoración y desvalorización (estigmatización; establecidos y forasteros de Elias)","Clasificación por categorías internas de una organización","Economía moral de los pobres","Igualación de capacidades"], r:0 },
+  { id:'k4', tema:'casos', p:"«Ellos hablan inglés desde chicos y van al teatro; yo nunca voy a tener esa forma de hablar en una entrevista» — ¿Qué proceso de Reygadas aparece?", ops:["Producción, apropiación y distribución del capital simbólico (habitus, distanciamiento)","Disputas por la legitimación","Clasificación y creación de límites","Relación entre diferencias y desigualdades"], r:0 },
+  { id:'k5', tema:'casos', p:"«El pobre es pobre porque no quiere trabajar; el que se esfuerza progresa» — ¿Qué proceso de Reygadas aparece?", ops:["Disputas en torno a la legitimación de las desigualdades (naturalización, justificación por el mérito)","Communitas","Revaloración de lo subalterno","Reclasificación de fronteras"], r:0 },
+  { id:'k6', tema:'casos', p:"«Prefieren a los migrantes porque “aguantan más”; les pagan menos y no tienen papeles» — ¿Qué proceso de Reygadas aparece?", ops:["Relación entre diferencias y desigualdades: los diferentes se vuelven desiguales","Los desiguales se vuelven diferentes","Mística de la excelencia","Guiones ocultos"], r:0 },
+  { id:'k7', tema:'casos', p:"«En el barrio, cuando los patrones no miran, nos reímos de ellos y nos cubrimos entre todos» — ¿Qué concepto citado por Reygadas aparece?", ops:["Guiones ocultos (Scott): resistencia en espacios fuera de la mirada de los dominantes","Desigualdad existencial","Categorías pareadas","Habitus"], r:0 },
+  { id:'k8', tema:'casos', p:"«Cerró el centro de día y mi mamá dejó de trabajar para cuidar a la abuela» — Desde Adelantado, ¿qué procedimientos se observan?", ops:["Desestatalización y refamiliarización (con impacto en el eje de género)","Estatalización y desfamiliarización","Mercantilización y comunitarización solamente","Desmercantilización plena"], r:0 },
+  { id:'k9', tema:'casos', p:"«Los que pudieron se pasaron a una prepaga; nosotros hicimos una rifa y la parroquia ayudó» — ¿Qué sectores de provisión del bienestar aparecen?", ops:["Estatal (deteriorado), mercantil (prepaga), informal/comunitario (rifa) y voluntario (parroquia)","Solo el estatal","Solo el mercantil","Ninguno, es un problema individual"], r:0 },
+  { id:'k10', tema:'casos', p:"«Desde que la secundaria es obligatoria, la universidad deja de ser un lujo de pocos» — Desde Adelantado, ¿qué hace la ley de obligatoriedad?", ops:["Normativiza y convierte la educación en derecho: desfamiliariza y estataliza, modificando un eje de desigualdad (ciudadanía)","Mercantiliza la educación","Familiariza la educación","No tiene ningún efecto sobre la desigualdad"], r:0 },
+  { id:'k11', tema:'casos', p:"Una política de becas para los 5 mejores promedios del barrio, sin mejorar sus escuelas, expresa según Dubet…", ops:["La igualdad de oportunidades (sacar a los meritorios de su condición sin cambiar la posición)","La igualdad de posiciones","La desmercantilización","La communitas"], r:0 },
+  { id:'k12', tema:'casos', p:"Una política que aumenta los salarios más bajos y mejora las condiciones de vida en los barrios populares expresa según Dubet…", ops:["La igualdad de posiciones","La igualdad de oportunidades","La meritocracia","La legitimación de la desigualdad"], r:0 },
+  { id:'k13', tema:'casos', p:"«A mí no me va mal, pero el país es cada vez más injusto» — ¿Qué idea de Dubet aparece?", ops:["Desdicha pública / felicidad privada: no hay continuidad mecánica entre la situación personal y el juicio sobre la sociedad","La curva del elefante","La igualdad de posiciones","El retorno de la renta"], r:0 },
+  { id:'k14', tema:'casos', p:"«Le dijeron que se capacite, pero acá no hay fábricas» — Desde Schteingart y Coatz, ¿qué idea aparece?", ops:["La calificación es necesaria pero no suficiente: la estructura productiva no demanda suficiente trabajo de calidad","El país debe copiar el modelo coreano","La restricción externa no existe","Hay que especializarse solo en soja"], r:0 },
+  { id:'k15', tema:'casos', p:"«Cortaron la mercadería al comedor y si seguimos cortando la calle nos dan de baja el plan» — Desde Grassi, ¿qué lógica se observa?", ops:["Desconocimiento de lo social y refuerzo de la función de orden/control del Estado","Una ampliación de derechos sociales","Una política social universal","La comunitarización planificada por el Estado"], r:0 },
+  { id:'k16', tema:'casos', p:"En una consigna “Identifique qué esferas de bienestar se visibilizan”, ¿a qué autor y qué esferas tenés que recurrir?", ops:["Adelantado, Noguera y Rambla: mercantil, estatal, doméstico-familiar y relacional","Reygadas: los cinco procesos simbólicos","Dubet: posiciones y oportunidades","Schteingart: los cuadrantes"], r:0 },
+  { id:'k17', tema:'casos', p:"Si la consigna pide “una estrategia para deconstruir” la desigualdad en un fragmento de Reygadas, ¿qué tenés que proponer?", ops:["La estrategia simbólica opuesta del mismo proceso (ej.: reclasificación, revalorar lo subalterno, reconocimiento, igualdad de capacidades, deslegitimación)","Bajar impuestos","Nada, alcanza con identificar el proceso","Una estrategia de otro autor sin relación con el proceso"], r:0, exp:"Cada proceso de Reygadas tiene su estrategia que refuerza y su estrategia que deconstruye: hay que proponer la del mismo proceso que identificaste." },
+  { id:'k18', tema:'casos', p:"«Eran todos iguales en la murga del carnaval: el patrón y el peón bailaban juntos» — ¿Qué concepto citado por Reygadas aparece?", ops:["Communitas (Turner): el ritual disuelve temporalmente las diferencias","Desigualdad categorial","Distanciamiento","Desigualdad existencial"], r:0 },
+
   // ───────── CONEXIONES ENTRE AUTORES ─────────
   { id:'a1', tema:'autores', p:"¿Qué autor propone ubicar a la Argentina en un “Escenario C”, potenciando recursos naturales y diversificando la industria?", ops:["Schteingart y Coatz","Dubet","Reygadas","Grassi"], r:0 },
   { id:'a2', tema:'autores', p:"¿Quiénes distinguen cuatro esferas (mercantil, estatal, doméstico-familiar y relacional)?", ops:["Adelantado, Noguera y Rambla","Schteingart y Coatz","Reygadas","Dubet"], r:0 },
@@ -868,6 +916,7 @@ const temasInfo = {
   oportunidades:{ label:'⚖️ Dubet: oportunidades', icon:'⚖️' },
   grassi:       { label:'🤝 Grassi',              icon:'🤝' },
   autores:      { label:'🔗 ¿Quién dijo qué?',    icon:'🔗' },
+  casos:        { label:'✍️ Casos (formato examen)', icon:'✍️' },
   todos:        { label:'🎓 Todos (simulacro)',   icon:'🎓' },
 };
 const temaNombres = {
@@ -878,8 +927,9 @@ const temaNombres = {
   oportunidades:'Dubet — Límites de la igualdad de oportunidades',
   grassi:'Grassi — De la siembra neoliberal a la destrucción libertaria',
   autores:'Conexiones entre autores',
+  casos:'Casos — identificar el concepto en un fragmento',
 };
-const temasOrden = ['desarrollo','bienestar','simbolica','percepcion','oportunidades','grassi','autores'];
+const temasOrden = ['desarrollo','bienestar','simbolica','percepcion','oportunidades','grassi','autores','casos'];
 
 // =========================================
 // APUNTES POR TEXTO
@@ -966,6 +1016,214 @@ const apuntesTextos = [
     { q:"Explique los dos supuestos equívocos sobre la política social y la propuesta de Grassi para una sociedad respetuosa.", g:["Supuesto 1: PS = asistencia (vs. necesidades sociales, infraestructura).","Supuesto 2: derechos como conquista unilateral (vs. escuela obligatoria, vacunación).","Tres órdenes: emergencia, urgencia, necesario.","Red institucional educativa-cultural y espacios en común."] },
   ]},
 ];
+
+// =========================================
+// CASOS — formato del examen (fragmento + consigna + guía)
+// Los fragmentos marcados "práctica" son testimonios de ejemplo escritos para
+// ejercitar; la teoría de las guías sale solo de los textos de la cursada.
+// =========================================
+const casosFiltros = { todos:'Todos', dubet:'👁️⚖️ Dubet', reygadas:'🎭 Reygadas', adelantado:'🏛️ Adelantado', grassi:'🤝 Grassi', schteingart:'🏭 Schteingart y Coatz', integrador:'🔗 Integradores' };
+const casos = [
+  { id:'c1', filtro:'dubet', origen:'examen', titulo:"Ramona: bullying por “boliviana”",
+    fragmento:"Sufría bullying en la escuela, demasiado […]. Porque era boliviana. O sea, ni siquiera soy boliviana, nací en Jujuy, mi mamá vino a los 15 años para acá […]. Por el color de piel, por la forma de hablar […] de dónde venís… quién sos […]. Me decían «negra fea» y todas esas cosas. (Ramona, CT, 21 años)",
+    consigna:"Desde la mirada de François Dubet identifique y fundamente qué tipo de desigualdades se observan en el fragmento.",
+    puntos:[
+      "Identifico que NO es una desigualdad de posición (ingresos, salario) sino una DISCRIMINACIÓN por origen, color de piel y forma de hablar.",
+      "Uso Dubet (Límites de la igualdad de oportunidades): en el modelo de oportunidades las desigualdades se piensan como discriminaciones que sufren grupos definidos por su “raza”, cultura, sexo… y que obstaculizan la competencia equitativa (acá, en la escuela).",
+      "Menciono que frente al estigma surge una exigencia de reconocimiento (transformar el estigma en rasgo positivo).",
+      "Uso Dubet (Medidas, percibidas y juzgadas): es una desigualdad VIVIDA y percibida, que no aparece en las estadísticas de ingresos; los jóvenes son más sensibles a las discriminaciones.",
+      "Explico que se vive como experiencia personal (“desigualdades solitarias”, cada uno construye su propia experiencia de la desigualdad).",
+      "Cito frases del fragmento (“porque era boliviana”, “por el color de piel, por la forma de hablar”, “negra fea”).",
+      "Extra: conecto con Reygadas (“los diferentes se vuelven desiguales”) y con Adelantado (eje de desigualdad étnico; la escuela, esfera estatal).",
+    ],
+    modelo:"Desde Dubet, el fragmento muestra una desigualdad que no es de posiciones (no habla de ingresos ni condiciones de trabajo) sino de discriminación: Ramona es tratada como inferior “por el color de piel, por la forma de hablar”, por su supuesto origen boliviano. En “Los límites de la igualdad de oportunidades” Dubet explica que, en el modelo de oportunidades, la sociedad deja de pensarse en clases y pasa a pensarse en grupos definidos por las discriminaciones que sufren en relación con su “raza”, su cultura o su sexo; esas discriminaciones son el obstáculo que impide una competencia equitativa, y la escuela es el espacio donde esa competencia se juega. Frente al estigma (“negra fea”) surge una exigencia de reconocimiento. Además, siguiendo “Desigualdades medidas, percibidas y juzgadas”, es una desigualdad percibida y vivida que no aparece en las estadísticas de ingresos: Dubet señala que los jóvenes son especialmente sensibles a las discriminaciones y que cada uno construye su propia experiencia de la desigualdad. Ramona ni siquiera es boliviana, lo que muestra que la desigualdad se construye sobre una diferencia atribuida (en términos de Reygadas, los diferentes se vuelven desiguales)." },
+
+  { id:'c2', filtro:'integrador', origen:'examen', titulo:"Rinesi: secundaria obligatoria y universidad",
+    fragmento:"Cuando la escuela secundaria no era obligatoria, estudiar en ella era apenas una posibilidad: una posibilidad no exigible a nadie, y que por lo tanto solo era elegida por aquellos que podían […] darse el relativo privilegio de hacer algo que el Estado no los obligaba a hacer […]. El establecimiento de la obligatoriedad legal de la escuela secundaria […] nos permite sostener que […] la opción por la Universidad va dejando de ser un segundo lujo que solo pueden darse quienes antes tuvieron las condiciones materiales para darse el primer lujo […], es una alternativa que también a todos se les abre inmediatamente después. (Rinesi)",
+    consigna:"Explique qué equidad y/o inequidad se observa en el párrafo. (En el modelo de examen se pide con el concepto de equidad de Isuani.)",
+    nota:"⚠️ El texto de Isuani NO está entre los 6 que pasaste, así que la app no puede darte su definición de equidad. Esta guía analiza el fragmento con los autores que sí tenemos. Si conseguís el texto de Isuani, se agrega.",
+    puntos:[
+      "Inequidad de partida: estudiar la secundaria era un “privilegio” de quienes tenían condiciones materiales; la universidad, un “segundo lujo”.",
+      "Adelantado: la obligatoriedad es una NORMATIVIZACIÓN (ley) que convierte la educación en derecho social → desfamiliariza y estataliza; modifica el eje de la ciudadanía (sujeto de derechos).",
+      "Adelantado: la universalización no garantiza por sí sola igual acceso (algunos grupos “sacan mayor partido”).",
+      "Grassi: la escuela común y obligatoria fue una imposición del Estado; los derechos se constituyen en procesos políticos (no preexisten).",
+      "Dubet: abre la igualdad de oportunidades (la universidad “se abre a todos”) sobre un piso común de posiciones.",
+    ],
+    modelo:"El fragmento describe primero una inequidad: cuando la secundaria no era obligatoria, solo la cursaban quienes “podían” darse ese “privilegio”, y la universidad era un “segundo lujo” reservado a quienes ya tenían condiciones materiales. La obligatoriedad legal cambia eso: con Adelantado, Noguera y Rambla podemos leerla como una normativización que convierte la educación en derecho social, desfamiliarizándola y estatalizándola, y así modifica un eje de desigualdad (la condición de sujeto de derechos). Grassi recuerda que la escuela obligatoria fue una imposición del Estado y que los derechos se constituyen en procesos políticos. Desde Dubet, la ley abre una igualdad de oportunidades (la universidad “se abre a todos”) apoyada en un piso común. Con Adelantado hay que agregar un matiz: la universalización no garantiza igual acceso, porque en una estructura desigual algunos grupos aprovechan más los derechos que otros." },
+
+  { id:'c3', filtro:'reygadas', origen:'practica', titulo:"La fábrica: “ellas son más prolijas”",
+    fragmento:"En la planta los puestos de supervisor siempre son para los varones. A nosotras nos mandan a la línea de empaque porque, según el gerente, “las mujeres son más prolijas y tienen más paciencia”. Cuando pedí pasar a mantenimiento me dijeron que ése no era trabajo para una chica. (Laura, operaria, 34 años)",
+    consigna:"Siguiendo a Reygadas, ¿qué proceso simbólico de construcción de la desigualdad se visibiliza? Fundamente. Identifique qué esferas de bienestar aparecen y proponga una estrategia para deconstruirla.",
+    puntos:[
+      "Proceso 1: clasificación, categorización y creación de límites.",
+      "Tilly: categorías pareadas (hombre/mujer) → desigualdad categorial; cuando las categorías internas (supervisor/empaque) coinciden con las externas (hombre/mujer), la desigualdad se refuerza.",
+      "Fronteras y techo de cristal: “no es trabajo para una chica”.",
+      "Esferas (Adelantado): mercantil (el empleo) y doméstico-familiar (la división sexual del trabajo, la mujer “paciente”). Eje de género transversal.",
+      "Estrategia: reclasificación y redefinición de fronteras, deconstrucción de categorías hegemónicas, categorías incluyentes.",
+    ],
+    modelo:"Se visibiliza el proceso de clasificación, categorización y creación de límites. Reygadas retoma a Tilly: la desigualdad categorial surge de categorías pareadas (hombre/mujer) que erigen fronteras y atribuyen cualidades a cada lado (“las mujeres son más prolijas”). Cuando las categorías internas de la organización (supervisor/empaque) coinciden con las externas de la sociedad (hombre/mujer), la desigualdad se refuerza, y aparece un techo de cristal (“no es trabajo para una chica”). Las esferas que se ven son la mercantil, donde se distribuyen puestos y salarios, y la doméstico-familiar, porque la idea de la mujer paciente viene de la división sexual del trabajo; el eje de género atraviesa ambas (Adelantado). Una estrategia para deconstruirla es la reclasificación: cuestionar las categorías hegemónicas y crear categorías incluyentes, por ejemplo que los puestos se asignen por capacitación y no por sexo." },
+
+  { id:'c4', filtro:'reygadas', origen:'practica', titulo:"El barrio: “villeros” y la dirección en el CV",
+    fragmento:"Afuera nos dicen villeros, que somos todos chorros. Cuando dejás el currículum y ven que vivís en el barrio, ya está, no te llaman. Mis amigos dejaron de poner la dirección. Lo peor es que algunos acá adentro ya se lo creen. (Lucas, 23 años)",
+    consigna:"Según Reygadas, ¿qué proceso simbólico aparece? Fundamente, identifique esferas y proponga una estrategia.",
+    puntos:[
+      "Proceso 2: valoración, desvalorización y revalorización (estigmatización del otro).",
+      "Elias: establecidos y forasteros; la vergüenza grupal impuesta (“algunos ya se lo creen”).",
+      "También clasificación/límites: el barrio como frontera que excluye.",
+      "Esferas: mercantil (acceso al empleo) y relacional-comunitaria (el barrio, la pertenencia).",
+      "Estrategia: revalorar lo subalterno, resiliencia contra la estigmatización; Grassi: espacios en común y reconocimiento mutuo.",
+    ],
+    modelo:"Aparece el proceso de valoración y desvalorización: se atribuyen características negativas a un grupo (“villeros”, “chorros”) para justificar su lugar inferior. Reygadas retoma a Elias: los establecidos se presentan como mejores y estigmatizan a los forasteros, y esa vergüenza grupal termina interiorizada (“algunos acá adentro ya se lo creen”). Además el barrio funciona como límite que clasifica y excluye. La desigualdad se ve en la esfera mercantil (no los llaman para trabajar) y en la relacional-comunitaria (el barrio como pertenencia). Para deconstruirla, Reygadas propone revalorar lo subalterno: invertir simbólicamente las valoraciones, resistir la estigmatización y cuestionar las jerarquías; en línea con Grassi, crear espacios en común donde haya reconocimiento mutuo." },
+
+  { id:'c5', filtro:'reygadas', origen:'practica', titulo:"El colegio privado y “la forma de hablar”",
+    fragmento:"Mis compañeros de la facu vienen de colegios privados, se van de vacaciones a Europa, hablan inglés desde chicos y van al teatro con los padres. Yo trabajo desde los 16. En las entrevistas siento que nunca voy a tener esa forma de hablar, esa seguridad. (Micaela, 20 años)",
+    consigna:"Según Reygadas, ¿qué proceso simbólico se visibiliza? Fundamente, identifique esferas y proponga una estrategia.",
+    puntos:[
+      "Proceso 4: producción, apropiación y distribución del capital simbólico.",
+      "Bourdieu: habitus (forma de hablar, seguridad) adquiridos en la familia y en espacios informales; difíciles de eliminar.",
+      "Therborn: distanciamiento; la desigualdad de capacidades parece personal pero es social.",
+      "Esferas: doméstico-familiar (lo que transmite la familia), mercantil (educación privada, viajes) y estatal (educación pública).",
+      "Estrategia: igualdad de capacidades, habitus equivalentes, acercamiento simbólico; Grassi: red pública educativa-cultural.",
+    ],
+    modelo:"Se visibiliza el proceso de producción, apropiación y distribución del capital simbólico. Las diferencias en “la forma de hablar” y la “seguridad” son habitus en el sentido de Bourdieu: disposiciones duraderas adquiridas en la familia, los viajes y los consumos culturales, que posicionan a las personas no solo por su dinero sino por su capital simbólico. Therborn llama a esto distanciamiento: la desigualdad de capacidades es social pero parece fruto de características personales (“nunca voy a tener esa forma de hablar”). Intervienen la esfera doméstico-familiar, que transmite el habitus, la mercantil (colegios privados, viajes) y la estatal (la educación pública). La estrategia para deconstruirla es la igualación de capacidades y el acercamiento simbólico; Grassi lo concreta con una red pública educativa-cultural que universalice esos bienes (teatro, talleres) en vez de dejarlos al mercado." },
+
+  { id:'c6', filtro:'reygadas', origen:'practica', titulo:"Comentario en redes: “el que se esfuerza progresa”",
+    fragmento:"«El que es pobre es porque no quiere laburar. Acá el que se esfuerza progresa. Que dejen de vivir de planes con la nuestra.» (comentario en una red social, con 3.000 “me gusta”)",
+    consigna:"Siguiendo a Reygadas, ¿qué proceso simbólico se visibiliza? Fundamente y proponga una estrategia para deconstruirlo. Puede vincularlo con Dubet o Grassi.",
+    puntos:[
+      "Proceso 5: disputas en torno a la legitimación de las desigualdades.",
+      "Naturalización y justificación de los resultados desiguales: la distribución correspondería al esfuerzo/contribución de cada uno.",
+      "Dubet: cuanto más se cree que el mérito es recompensado, más aceptables parecen las desigualdades; el mérito como acto de fe; hostilidad hacia los asistidos.",
+      "Grassi: “planeros”, merecimiento, “nunca trabajó” = “nunca aportó”; queda fuera de foco la concentración de la riqueza.",
+      "Estrategia: deslegitimar la desigualdad (economía moral, la riqueza se produce socialmente, datos de concentración).",
+    ],
+    modelo:"Se visibiliza la disputa en torno a la legitimación de las desigualdades. El comentario naturaliza la pobreza y presenta la distribución como resultado del esfuerzo individual: para Reygadas, esta estrategia funciona cuando se convence de que la riqueza de cada grupo corresponde a su contribución. Dubet muestra que cuanto más se cree que el mérito es recompensado, más aceptables parecen las desigualdades, aunque esa creencia sea más un acto de fe que una experiencia real, y señala el crecimiento de la hostilidad hacia quienes reciben asistencia. Grassi analiza el mismo discurso del “planero” y del merecimiento, que deja fuera de foco las ganancias extraordinarias de los grupos más poderosos. Para deconstruirlo se puede deslegitimar esa desigualdad: recordar que la riqueza se produce socialmente, mostrar la concentración (Grassi) y apoyarse en la economía moral que cuestiona las apropiaciones abusivas." },
+
+  { id:'c7', filtro:'reygadas', origen:'practica', titulo:"La obra: “los paraguayos aguantan más”",
+    fragmento:"En la obra el capataz prefiere a los paraguayos porque “aguantan más y no se quejan”. Les pagan menos y como muchos no tienen los papeles, nadie reclama nada. (Ramón, albañil, 45 años)",
+    consigna:"Según Reygadas, ¿qué proceso simbólico aparece? Identifique ejes de desigualdad y esferas, y proponga una estrategia.",
+    puntos:[
+      "Proceso 3: relación entre diferencias y desigualdades → los diferentes se vuelven desiguales.",
+      "Ejemplos del texto: segmentación étnica del mercado de trabajo y restricción de derechos laborales de los migrantes.",
+      "Ejes (Adelantado): etnia/nacionalidad y ciudadanía (sujeto de derechos: “no tienen los papeles”).",
+      "Esfera mercantil (salario, contratación) y estatal (documentación, derechos).",
+      "Estrategia: reconocimiento del derecho a la diferencia, igualdad de derechos, discursos antidiscriminatorios.",
+    ],
+    modelo:"Aparece la relación entre diferencias y desigualdades: los diferentes se vuelven desiguales. Una diferencia de origen se usa para justificar un trato asimétrico (“aguantan más”, se les paga menos). Reygadas da como ejemplo contemporáneo la segmentación étnica del mercado de trabajo y la restricción de los derechos laborales de los migrantes. Con Adelantado se ven dos ejes de desigualdad que se cruzan: la etnia/nacionalidad y la condición de sujeto de derechos (“no tienen los papeles”), en la esfera mercantil (contratación y salario) y en la estatal (documentación y derechos). La estrategia opuesta es el reconocimiento del derecho a la diferencia: participar en condiciones equitativas, con igualdad de derechos y discursos antidiscriminatorios." },
+
+  { id:'c8', filtro:'adelantado', origen:'practica', titulo:"Cerró el centro de día",
+    fragmento:"Desde que el municipio cerró el centro de día, mi mamá tuvo que dejar el trabajo para cuidar a la abuela. Mi hermano “ayuda” los fines de semana. Una vecina a veces se queda con ella, y los que pueden pagan una cuidadora. (Sofía, 26 años)",
+    consigna:"Desde Adelantado, Noguera y Rambla, identifique qué procedimientos de la política social se observan, qué esferas y qué ejes de desigualdad.",
+    puntos:[
+      "Desestatalizar (se retira un servicio estatal) → refamiliarizar (el cuidado vuelve a la familia).",
+      "Mercantilización para quienes pueden pagar (cuidadora) y reciprocidad comunitaria (la vecina).",
+      "Esferas: estatal, doméstico-familiar, mercantil y relacional-comunitaria.",
+      "Eje de género: el cuidado recae en la madre (deja el trabajo), el hermano “ayuda”.",
+      "La política social no solo compensa: constituye y modula desigualdades (ej. del texto: privatizar el cuidado de ancianos afecta la desigualdad de género).",
+    ],
+    modelo:"Se observa un proceso de desestatalización (el municipio cierra el centro de día) seguido de una refamiliarización: el cuidado vuelve a la esfera doméstico-familiar. Para quienes pueden pagar, se mercantiliza (cuidadora), y aparece reciprocidad comunitaria (la vecina). Intervienen así las cuatro esferas. El eje de género es central: es la madre la que deja el trabajo, mientras el hermano solo “ayuda”. El caso muestra la tesis de los autores: la política social no se limita a compensar el mercado, sino que constituye y modula desigualdades; ellos mismos dan el ejemplo de que privatizar el cuidado de ancianos afecta las desigualdades de género." },
+
+  { id:'c9', filtro:'adelantado', origen:'practica', titulo:"El tratamiento y la rifa",
+    fragmento:"El hospital no tenía turno hasta dentro de seis meses. Los que pudieron se pasaron a una prepaga. Nosotros hicimos una rifa en el barrio y la parroquia nos ayudó con los remedios. (Jorge, 52 años)",
+    consigna:"Desde Adelantado, Noguera y Rambla, analice qué sectores de provisión del bienestar y qué procedimientos se ponen en juego.",
+    puntos:[
+      "Deterioro de la sanidad pública → mercantilización/desestatalización gradual para los que pueden (prepaga).",
+      "Para los estratos bajos: redes informales y voluntarias (rifa barrial, parroquia) → comunitarización/refamiliarización.",
+      "Es casi el mismo ejemplo del texto sobre la sanidad pública.",
+      "Sectores: estatal, mercantil, voluntario e informal.",
+      "La universalización no garantiza igual acceso; la PS distribuye responsabilidades entre sectores.",
+    ],
+    modelo:"El caso reproduce el ejemplo que dan los autores sobre la sanidad: cuando se deterioran los recursos de la salud pública, una parte de la demanda (los que pueden) se canaliza hacia la sanidad privada, es decir, hay mercantilización y desestatalización graduales, mientras que los estratos bajos recurren a redes informales y voluntarias: la rifa del barrio (reciprocidad comunitaria) y la parroquia (sector voluntario). Se ven los cuatro sectores de provisión del bienestar: estatal, mercantil, informal y voluntario. La política social, por acción u omisión, asigna a cada sector una responsabilidad distinta y así construye y modula desigualdades: aunque la salud sea un derecho universal, no todos acceden igual." },
+
+  { id:'c10', filtro:'grassi', origen:'practica', titulo:"El comedor sin alimentos",
+    fragmento:"Desde que cortaron la mercadería al comedor, cocinamos con lo que donan los vecinos. Cuando fuimos a reclamar nos dijeron que si seguíamos cortando la calle nos daban de baja el plan. Ahora vienen más chicos que antes. (Norma, referente de un comedor)",
+    consigna:"Desde Grassi, analice el fragmento: ¿qué lógica de la política libertaria se observa y qué propondría la autora?",
+    puntos:[
+      "Desconocimiento de lo social: eliminación de prestaciones, la reproducción devuelta a lo privado/comunitario.",
+      "Amenazas a quienes protestan: se refuerza la función de orden y control del Estado (Grassi lo relata sobre los comedores).",
+      "Más chicos: la pobreza golpea más a los jóvenes (66,1% en 0-14 años en 2024).",
+      "Propuesta: emergencia → comer es lo primero (fortalecer comedores y Tarjeta Alimentar).",
+      "Más allá: urgencia de cuidados y formación; red institucional educativa-cultural.",
+    ],
+    modelo:"El fragmento muestra la lógica que Grassi atribuye al libertarismo: lo social no existe como tal, por lo que se recortan prestaciones y la reproducción queda librada a los hogares y a la solidaridad de los vecinos. A la vez se fortalece la función de orden del Estado: Grassi relata que las movilizaciones de organizaciones sociales por alimentos para comedores estuvieron plagadas de amenazas de suspensión de pagos. Que vengan “más chicos” coincide con los datos que cita: en 2024 la pobreza llegaba al 66,1% en el grupo de 0 a 14 años. Grassi propondría atender primero la emergencia (asegurar alimentación para todos, fortaleciendo comedores y Tarjeta Alimentar) y luego lo urgente: cuidados y formación de las personas a través de una red institucional pública educativa y cultural." },
+
+  { id:'c11', filtro:'dubet', origen:'practica', titulo:"“A mí no me va mal, pero el país…”",
+    fragmento:"A mí no me va mal, tengo laburo, pude comprarme el auto. Pero el país es un desastre, cada vez hay más diferencia entre los que tienen y los que no. Esto es cada vez más injusto. (Martín, 38 años)",
+    consigna:"Desde Dubet (Desigualdades medidas, percibidas y juzgadas), analice el fragmento.",
+    puntos:[
+      "Desigualdades percibidas y juzgadas ≠ medidas: régimen de desigualdades (hechos, representaciones y juicios).",
+      "“Desdicha pública / felicidad privada”: no me va tan mal en una sociedad que va muy mal.",
+      "No hay continuidad mecánica entre la situación personal y el juicio sobre la sociedad (ej.: 25% satisfecho en una sociedad que juzga injusta).",
+      "Percepción de aumento constante de la desigualdad (en Francia, más del 80% lo cree aunque casi no varió).",
+    ],
+    modelo:"El fragmento ilustra que, para Dubet, las desigualdades percibidas y juzgadas no son el reflejo de las medidas: las desigualdades son a la vez hechos, representaciones y juicios. Martín muestra lo que Dubet llama oponer la desdicha pública a la felicidad privada: “no me va tan mal en una sociedad que sí está muy mal”. Su juicio sobre la sociedad no se deduce de su situación personal: Dubet muestra que no hay continuidad mecánica entre situaciones, percepciones y sentimientos de injusticia (por ejemplo, un 25% de los franceses está satisfecho con su situación en una sociedad que juzga muy injusta). También aparece la percepción de un aumento continuo de las desigualdades, que en Francia comparte más del 80% aunque las mediciones casi no cambiaron." },
+
+  { id:'c12', filtro:'dubet', origen:'practica', titulo:"Becas para “los mejores” o mejorar la escuela del barrio",
+    fragmento:"El intendente anunció becas para que los cinco mejores promedios de las escuelas del barrio puedan estudiar en un colegio del centro. Las escuelas del barrio siguen sin calefacción y con faltante de docentes.",
+    consigna:"Desde Dubet (Los límites de la igualdad de oportunidades), ¿qué concepción de la justicia social expresa la medida? ¿Qué propondría el autor?",
+    puntos:[
+      "La medida expresa la igualdad de oportunidades: ayudar a los más meritorios a escapar de su condición, sin modificar la posición.",
+      "Es casi el ejemplo del texto: no es lo mismo mejorar la oferta escolar en barrios desfavorecidos que ayudar a los de más mérito a unirse a la élite.",
+      "Críticas: no reduce desigualdades; “héroes” que son el árbol que no deja ver el bosque de la inmovilidad.",
+      "Dubet priorizaría la igualdad de posiciones: mejorar las escuelas del barrio (achicar distancias), que además genera más movilidad.",
+    ],
+    modelo:"La medida expresa la igualdad de oportunidades: busca que unos pocos con mérito puedan salir de su posición, sin cambiar la posición misma (las escuelas del barrio siguen igual). Dubet usa casi este ejemplo: no es lo mismo mejorar la calidad de la oferta escolar en los barrios desfavorecidos que ayudar a los alumnos de más mérito a unirse a la élite. Criticaría que este modelo no reduce las desigualdades y que esos pocos becados pueden ser el “árbol de la fluidez que no deja ver el bosque de la inmovilidad”. Dubet propondría priorizar la igualdad de posiciones, es decir, mejorar las escuelas del barrio para achicar la distancia con las del centro, porque es mejor para la cohesión y la confianza y porque, al reducir distancias, también aumenta la movilidad." },
+
+  { id:'c13', filtro:'schteingart', origen:'practica', titulo:"La textil que cerró",
+    fragmento:"Mi viejo trabajó veinte años en una textil. Cuando entraron las importaciones cerró y ahora hace changas sin aportes. Dicen que tiene que capacitarse, pero ¿para qué trabajo, si acá no hay fábricas? (Ezequiel, 22 años)",
+    consigna:"Desde Schteingart y Coatz, analice la relación entre estructura productiva y mercado laboral que aparece en el fragmento.",
+    puntos:[
+      "La estructura productiva no es neutral: hay pocos sectores de alta productividad que generen empleo de calidad.",
+      "Mercado laboral: ~40% de la fuerza laboral con problemas de empleo (informalidad, independientes de baja calificación).",
+      "Capacitarse es necesario pero no suficiente si la estructura productiva no demanda ese trabajo.",
+      "Estrategia defensiva de la política industrial: sostener sectores intensivos en trabajo como el textil, minimizando el daño de las importaciones.",
+    ],
+    modelo:"El fragmento muestra lo que Schteingart y Coatz llaman los vasos comunicantes entre estructura productiva y mercado laboral: existen relativamente pocos sectores de alta productividad que demanden trabajo de calidad, y por eso una parte enorme de la fuerza laboral (alrededor del 40%) queda en la informalidad, el desempleo o el trabajo independiente de baja calificación, como el padre de Ezequiel. La pregunta “¿para qué trabajo, si acá no hay fábricas?” coincide con la tesis de los autores: la calificación es necesaria pero no suficiente, porque de poco sirve si la estructura productiva no la demanda. Para sectores como el textil, los autores proponen una estrategia defensiva dentro de la política industrial: minimizar el daño de las importaciones porque son clave para el empleo y la estabilidad social." },
+];
+
+let casosFiltroActual = 'todos';
+function renderizarCasos(filtro) {
+  filtro = filtro || casosFiltroActual;
+  casosFiltroActual = filtro;
+  document.getElementById('casos-filtro').innerHTML = Object.entries(casosFiltros).map(([k,v]) =>
+    `<button class="${k===filtro?'sel':''}" onclick="renderizarCasos('${k}')">${v}</button>`).join('');
+  const prog = cargarProgreso();
+  const lista = casos.filter(c => filtro === 'todos' || c.filtro === filtro);
+  document.getElementById('casos-lista').innerHTML = lista.map(c => {
+    const estado = prog[c.id] ? (prog[c.id].errores === 0 ? ' · ✅' : ' · 🔁 repasar') : '';
+    return `
+    <div class="card" id="caso-${c.id}">
+      <span class="caso-origen ${c.origen==='examen'?'examen':''}">${c.origen==='examen' ? '📄 Del modelo de examen' : '🧪 Caso de práctica'}</span>
+      <h3 style="margin-top:8px">${c.titulo}${estado}</h3>
+      <div class="caso-frag">${c.fragmento}</div>
+      <div class="caso-consigna">📝 ${c.consigna}</div>
+      ${c.nota ? `<div class="caso-nota">${c.nota}</div>` : ''}
+      <textarea class="caso-texto" placeholder="Escribí tu respuesta como en el examen…" oninput="guardarBorrador('${c.id}', this.value)">${leerBorrador(c.id)}</textarea>
+      <button class="btn-accion primario" style="margin-top:8px" onclick="mostrarGuia('${c.id}')">👀 Ver guía de corrección</button>
+      <div class="caso-guia" id="guia-${c.id}">
+        <h4>✔️ Marcá lo que incluiste en tu respuesta</h4>
+        ${c.puntos.map(p => `<label class="caso-check"><input type="checkbox" data-caso="${c.id}"> <span>${p}</span></label>`).join('')}
+        <h4>📗 Respuesta modelo</h4>
+        <div class="caso-modelo">${c.modelo}</div>
+        <button class="btn-sabia" style="margin-top:12px" onclick="evaluarCaso('${c.id}')">💾 Guardar mi evaluación</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function leerBorrador(id) { try { return (localStorage.getItem('tobiestudia_caso_' + id) || '').replace(/</g,'&lt;'); } catch(e) { return ''; } }
+function guardarBorrador(id, v) { try { localStorage.setItem('tobiestudia_caso_' + id, v); } catch(e) {} }
+function mostrarGuia(id) { document.getElementById('guia-' + id).classList.add('visible'); }
+function evaluarCaso(id) {
+  const checks = [...document.querySelectorAll(`input[data-caso="${id}"]`)];
+  const marcados = checks.filter(c => c.checked).length;
+  const ok = marcados >= Math.ceil(checks.length * 0.7);
+  const c = casos.find(x => x.id === id);
+  registrarRespuesta(id, 'casos', ok, '✍️ ' + c.titulo);
+  alert(ok ? `¡Muy bien! Incluiste ${marcados} de ${checks.length} puntos clave. ✅` : `Incluiste ${marcados} de ${checks.length} puntos clave. Repasá la respuesta modelo y volvé a intentarlo 💪`);
+  renderizarCasos();
+  document.getElementById('caso-' + id)?.scrollIntoView({ block: 'start' });
+}
+
 
 const conexiones = [
   "<strong>Política social que “hace” sociedad:</strong> Adelantado et al. (la PS constituye y modula desigualdades) ↔ Grassi (la PS hace sociedades diferentes; no es solo asistencia).",
@@ -1106,6 +1364,25 @@ const lecciones = {
       <div class="ls-dato">🚨 Emergencia: comer y techo. ⏱️ Urgencia: cuidados y formación. 🔬 Necesario: investigar.</div>
       <div class="ls-dato">🏫 Red pública educativa-cultural, mejor equipada cuanto más lejos; espacios en común para reconocerse.</div>` },
   ],
+  casos: [
+    { titulo:'🧭 Cómo responder una consigna con fragmento', cuerpo:`
+      <div class="ls-dato">1️⃣ <strong>Identificá</strong> el concepto o proceso del autor que pide la consigna (nombralo tal cual).</div>
+      <div class="ls-dato">2️⃣ <strong>Definilo</strong> con las palabras del texto.</div>
+      <div class="ls-dato">3️⃣ <strong>Fundamentá</strong> citando frases del fragmento que lo muestran.</div>
+      <div class="ls-dato">4️⃣ Si pide <strong>esferas</strong>: Adelantado (mercantil, estatal, doméstico-familiar, relacional) + ejes (clase, género, etnia, edad, ciudadanía…).</div>
+      <div class="ls-dato">5️⃣ Si pide <strong>estrategia</strong>: la estrategia opuesta del mismo proceso (Reygadas) o la propuesta del autor.</div>
+      <div class="ls-tip">💡 Sumá puntos conectando con otro autor (ej.: Dubet + Reygadas “los diferentes se vuelven desiguales”).</div>` },
+    { titulo:'🎭 Reygadas: pistas para reconocer cada proceso', cuerpo:`
+      <div class="ls-dato">1️⃣ <strong>Clasificación/límites:</strong> “esto es para varones”, categorías pareadas, fronteras, techos de cristal.</div>
+      <div class="ls-dato">2️⃣ <strong>Valoración/desvalorización:</strong> insultos, estigmas, “villeros”, sentirse menos.</div>
+      <div class="ls-dato">3️⃣ <strong>Diferencias→desigualdades:</strong> por ser de otro origen/cultura/lengua se los trata peor o tienen menos derechos.</div>
+      <div class="ls-dato">4️⃣ <strong>Capital simbólico:</strong> forma de hablar, modales, educación, gustos (habitus).</div>
+      <div class="ls-dato">5️⃣ <strong>Legitimación:</strong> “es natural”, “se lo merecen”, “el que se esfuerza progresa”.</div>` },
+    { titulo:'👁️⚖️ Dubet: pistas para reconocer', cuerpo:`
+      <div class="ls-dato">⚖️ <strong>Posiciones:</strong> salarios, condiciones de vida, distancia entre lugares sociales.</div>
+      <div class="ls-dato">🎯 <strong>Oportunidades/discriminación:</strong> “por ser mujer / migrante / por el color de piel no pude…”.</div>
+      <div class="ls-dato">👁️ <strong>Percibidas ≠ medidas:</strong> lo que la gente siente o juzga vs. lo que dicen los números; “desigualdades solitarias”.</div>` },
+  ],
   autores: [
     { titulo:'🔗 Mapa de autores', cuerpo:`
       <div class="ls-dato">🏭 <strong>Schteingart y Coatz:</strong> estructura productiva, Escenario C.</div>
@@ -1214,7 +1491,7 @@ function mostrarPantalla(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('pantalla-' + id).classList.add('active');
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-  const orden = ['inicio','quiz','flash','apuntes','resumen','refuerzo'];
+  const orden = ['inicio','quiz','flash','casos','apuntes','resumen','refuerzo'];
   const idx = orden.indexOf(id);
   if (idx >= 0) document.querySelectorAll('nav button')[idx].classList.add('active');
   window.scrollTo(0, 0);
@@ -1222,6 +1499,7 @@ function mostrarPantalla(id) {
   if (id === 'quiz') inicializarSelectorQuiz();
   if (id === 'flash') cargarFlashcards();
   if (id === 'apuntes') renderizarApuntes();
+  if (id === 'casos') renderizarCasos();
   if (id === 'resumen') renderizarResumen();
   if (id === 'refuerzo') inicializarRefuerzo();
 }
@@ -1238,6 +1516,7 @@ function renderizarInicio() {
     { key:'percepcion',    h3:'Desigualdades medidas, percibidas y juzgadas', autor:'Dubet', qty:'Curva del elefante · Mérito · Percepción' },
     { key:'oportunidades', h3:'Los límites de la igualdad de oportunidades',  autor:'Dubet', qty:'Posiciones vs. oportunidades · Rawls' },
     { key:'grassi',        h3:'De la siembra neoliberal a la destrucción libertaria', autor:'Grassi', qty:'Capital Humano · Política social · Respeto' },
+    { key:'casos',         h3:'¿Qué concepto aparece en el fragmento?', autor:'Formato del examen', qty:'Identificar procesos, esferas y estrategias' },
     { key:'autores',       h3:'¿Quién dijo qué?',                            autor:'Conexiones entre autores', qty:'Ideal para el final del repaso' },
   ];
   document.getElementById('inicio-grid').innerHTML = temasData.map(t => {
@@ -1520,7 +1799,7 @@ function renderizarResumen() {
     const pct = intTema ? Math.round((intTema - errTema) / intTema * 100) : 100;
     const color = pct >= 70 ? 'var(--verde)' : pct >= 50 ? 'var(--acc-oscuro)' : 'var(--rojo)';
     const etiq = pct >= 70 ? '✅ Bien' : pct >= 50 ? '⚠️ Regular' : '❌ Repasar';
-    const items = [...preguntas.map(q => ({...q, tipo:'📝'})), ...flashcards.map(f => ({...f, tipo:'🃏'}))].filter(x => x.tema === tema);
+    const items = [...preguntas.map(q => ({...q, tipo:'📝'})), ...flashcards.map(f => ({...f, tipo:'🃏'})), ...casos.map(c => ({id:c.id, tema:'casos', p:c.titulo, tipo:'✍️'}))].filter(x => x.tema === tema);
     const falladas = items.filter(x => prog[x.id]?.errores > 0).sort((a,b) => prog[b.id].errores - prog[a.id].errores);
     const bien = items.filter(x => prog[x.id] && prog[x.id].errores === 0);
     const noVistas = items.filter(x => !prog[x.id]).length;
